@@ -1,0 +1,28 @@
+
+# Manipulacao e analise dos dados
+numpy
+pandas
+scipy
+
+# Graficos e visualizacao
+matplotlib
+seaborn
+
+# Machine Learning
+scikit-learn
+
+# Interpretabilidade da IA
+shap
+
+# Notebooks Jupyter
+jupyter
+ipykernel
+
+# Interface de demonstracao
+streamlit
+
+# Persistencia dos modelos
+joblib
+
+# Testes
+pytest

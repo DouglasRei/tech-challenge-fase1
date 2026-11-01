@@ -1,0 +1,25 @@
+
+# Ambiente virtual
+.venv/
+
+# Arquivos temporarios do Python
+__pycache__/
+*.pyc
+
+# Cache do Jupyter
+.ipynb_checkpoints/
+
+# Cache dos testes
+.pytest_cache/
+
+# Informacoes sensiveis
+.env
+.env.*
+
+# Dados gerados
+data/processed/*
+!data/processed/.gitkeep
+
+# Modelos treinados
+models/*
+!models/.gitkeep
