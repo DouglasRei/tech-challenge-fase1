@@ -6,6 +6,10 @@
 import json
 from pathlib import Path
 from relatorio_pdf import gerar_relatorio_pdf
+from validacao_entrada import validar_amostra, EntradaInvalida
+import logging
+
+logger = logging.getLogger(__name__)
 
 import joblib
 import streamlit as st
@@ -304,8 +308,8 @@ with aba1:
     )
 
     st.info(
-        "O modulo de previsoes interativas "
-        "sera integrado no proximo passo."
+        "O módulo de previsões interativas já está disponível "
+        "na aba Simulador de IA."
     )
 
 
@@ -678,6 +682,21 @@ with aba4:
         st.error("Classes inesperadas no dataset.")
         st.stop()
 
+    # PASSO 39 - Validar o referencial numérico antes de gerar limites.
+    dados_referencia = dados_originais[colunas_entrada].apply(
+        pd.to_numeric, errors="coerce"
+    )
+    valores_referencia = dados_referencia.to_numpy(dtype=float)
+    if (
+        not np.isfinite(valores_referencia).all()
+        or (valores_referencia < 0).any()
+    ):
+        st.error("O dataset de referência contém valores numéricos inválidos.")
+        st.stop()
+
+    minimos_referencia = dados_referencia.min(axis=0)
+    maximos_referencia = dados_referencia.max(axis=0)
+
     # 7. Selecionar uma amostra inicial
 
     st.subheader("1. Escolha uma amostra")
@@ -695,6 +714,12 @@ with aba4:
         "B" if tipo_amostra == "Exemplo benigno"
         else "M"
     )
+
+    # Evitar que o PDF de um exemplo anterior permaneça disponível
+    # quando o usuário troca o tipo de amostra.
+    if st.session_state.get("tipo_amostra_anterior") not in (None, rotulo_original):
+        st.session_state.pop("relatorio_pdf", None)
+    st.session_state["tipo_amostra_anterior"] = rotulo_original
 
     amostra = dados_originais.loc[
         dados_originais["diagnosis"] == rotulo_original
@@ -774,16 +799,35 @@ with aba4:
             columns=colunas_entrada
         )
 
-        # 10. Validar os valores numericos
-
-        valores = X_entrada.to_numpy(dtype=float)
-
-        if not np.isfinite(valores).all():
-            st.error(
-                "Foram encontrados valores numericos "
-                "invalidos."
+        # 10. Validar 30 entradas, ordem, finitude e limites operacionais.
+        try:
+            X_entrada = validar_amostra(
+                X_entrada,
+                colunas_entrada,
+                maximos_referencia
             )
+        except EntradaInvalida as erro:
+            st.error(f"Não foi possível executar a previsão: {erro}")
             st.stop()
+
+        # Alertar quando a simulação extrapolar os valores vistos no dataset.
+        # O aviso é informativo; não é critério clínico.
+        fora_da_referencia = [
+            nome for nome in colunas_entrada
+            if (
+                X_entrada.iloc[0][nome] < minimos_referencia[nome]
+                or X_entrada.iloc[0][nome] > maximos_referencia[nome]
+            )
+        ]
+        if fora_da_referencia:
+            nomes_fora = ", ".join(fora_da_referencia[:5])
+            if len(fora_da_referencia) > 5:
+                nomes_fora += ", entre outras"
+            st.warning(
+                f"Atenção: esta simulação usa valores fora da faixa do "
+                f"dataset de referência ({nomes_fora}). "
+                "A confiabilidade da previsão pode ser menor."
+            )
 
         # 11. Identificar a classe maligna
 
@@ -809,7 +853,7 @@ with aba4:
                 probabilidades[0, indice_maligno]
             )
 
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError, FloatingPointError):
             st.error(
                 "Nao foi possivel processar "
                 "os valores informados."
@@ -886,13 +930,15 @@ with aba4:
             amostra[colunas_entrada]
             .to_numpy(dtype=float)
         )
-
+        
         dados_alterados = not np.allclose(
-            valores.ravel(),
+            X_entrada.iloc[0].to_numpy(dtype=float),
             valores_originais,
             rtol=0,
             atol=1e-9
-        )
+)
+
+       
 
         if dados_alterados:
 
@@ -947,9 +993,13 @@ with aba4:
 
             st.success("Relatorio PDF preparado com sucesso!")
 
-        except Exception as erro:
+        except Exception:
+            logger.exception("Falha ao gerar o relatório PDF")
             st.session_state.pop("relatorio_pdf", None)
-            st.warning(f"Nao foi possivel preparar o PDF: {erro}")
+            st.warning(
+                "Não foi possível preparar o PDF desta simulação. "
+                "Confira o terminal da aplicação para diagnóstico."
+            )
 
     # Botao de download fora do st.form e depois da geracao do PDF.
     if st.session_state.get("relatorio_pdf") is not None:
