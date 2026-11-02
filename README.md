@@ -238,20 +238,49 @@ Este experimento usa um dataset tabular público, histórico e de dimensão rest
 
 O sistema tem finalidade **exclusivamente acadêmica**. Qualquer eventual pesquisa com utilização em saúde exigiria validação externa, governança de dados, análise de riscos, procedimentos regulatórios pertinentes e supervisão de profissionais habilitados.
 
+
 ## 11. Evidências e material para a banca
 
-O enunciado da FIAP prevê, além do código e dos notebooks:
+### Implementação concluída
 
-- **README.md** com instruções de execução (este documento).
-- **Dockerfile** funcional e testado — *item ainda a preparar/validar na etapa de entrega*.
-- **Dataset ou link de download**, com instruções para reproduzir o ambiente.
-- **Relatório técnico em PDF** com link do repositório, pré-processamento, modelos, métricas, gráficos, resultados e análise crítica — *documento distinto dos PDFs individuais gerados pelo simulador*.
-- **Vídeo de demonstração**, hospedado no YouTube ou Vimeo (público ou não listado), de **até 15 minutos**.
+- Modelo supervisionado de Regressão Logística.
+- Pipeline de padronização e classificação.
+- Análise exploratória e comparação de modelos.
+- Avaliação final com métricas e matriz de confusão.
+- Explicabilidade global e individual com SHAP.
+- Interface interativa desenvolvida com Streamlit.
+- Geração de PDF individual por simulação.
+- Validação de entradas e tratamento de dados inválidos.
+- Execução em ambiente Docker.
+- Testes automatizados: 14 aprovados.
 
-**Repositório Git:** `[INSERIR_URL_DO_REPOSITORIO]`  
-**Vídeo demonstrativo:** `[INSERIR_URL_DO_VIDEO_APOS_PUBLICACAO]`
+### Reprodutibilidade
 
-Antes de publicar, revisar `.gitignore`, segredos, arquivos gerados, dependências, licença/atribuição do dataset e instruções de execução.
+A aplicação foi testada em contêiner Docker, incluindo
+a reconstrução a partir do pacote de entrega.
+
+O projeto utiliza Python 3.13, dependências
+registradas e um modelo serializado em Joblib.
+
+### Repositório
+
+https://github.com/DouglasRei/tech-challenge-fase1
+
+### Materiais complementares
+
+Relatório técnico acadêmico: pendente de inclusão.
+
+Vídeo de demonstração: pendente de publicação.
+
+### Limitações
+
+Este projeto possui finalidade exclusivamente
+acadêmica e experimental.
+
+Os resultados obtidos no conjunto de teste não
+representam validação clínica nem garantem o mesmo
+desempenho em outros conjuntos de dados.
+
 
 ## 12. Referências
 
