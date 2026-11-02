@@ -23,3 +23,5 @@ data/processed/*
 # Modelos treinados
 models/*
 !models/.gitkeep
+
+!models/modelo_final_logistica.joblib
