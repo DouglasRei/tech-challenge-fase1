@@ -26,3 +26,5 @@ joblib
 
 # Testes
 pytest
+
+reportlab

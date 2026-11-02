@@ -1,0 +1,18 @@
+{
+    "projeto": "Tech Challenge - Fase 1",
+    "modelo": "Regressao Logistica",
+    "pipeline": "pipeline_logistica",
+    "limiar": 0.5,
+    "classe_positiva": 1,
+    "criterio": "Maior F1-score e acuracia entre as estrategias avaliadas, com zero falsos positivos nas previsoes OOF.",
+    "amostras_treinamento": 398,
+    "amostras_validacao": 85,
+    "amostras_teste_reservado": 86,
+    "resultados_ooof": {
+        "acuracia_percentual": 98.24,
+        "f1_percentual": 97.58,
+        "falsos_positivos": 0,
+        "falsos_negativos": 7
+    },
+    "observacao": "Selecao para avaliacao academica. Resultados exploratorios, sem validacao clinica. Nao alterar a estrategia com base no teste final."
+}

@@ -1,0 +1,33 @@
+{
+    "projeto": "Tech Challenge - Fase 1",
+    "dataset": "Breast Cancer Wisconsin Diagnostic",
+    "tipo_avaliacao": "Teste independente reservado",
+    "modelo": {
+        "algoritmo": "Regressao Logistica",
+        "limiar": 0.5,
+        "classe_positiva": 1,
+        "descricao_classe_positiva": "Maligno"
+    },
+    "dados": {
+        "total_dataset": 569,
+        "desenvolvimento": 483,
+        "teste": 86,
+        "caracteristicas": 30,
+        "benignos_teste": 54,
+        "malignos_teste": 32
+    },
+    "matriz_confusao": {
+        "verdadeiros_negativos": 54,
+        "falsos_positivos": 0,
+        "falsos_negativos": 0,
+        "verdadeiros_positivos": 32
+    },
+    "metricas_percentuais": {
+        "acuracia": 100.0,
+        "precisao": 100.0,
+        "recall": 100.0,
+        "f1_score": 100.0,
+        "especificidade": 100.0
+    },
+    "limitacoes": "Resultados observados em um unico conjunto de teste de 86 amostras. Nao constituem garantia de generalizacao nem validacao clinica."
+}
