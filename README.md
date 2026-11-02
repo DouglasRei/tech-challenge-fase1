@@ -150,3 +150,73 @@ e existencia dos graficos.
 
 Os resultados representam uma investigacao
 academica, nao uma validacao clinica.
+
+
+## Etapa 4 - Preparacao dos Dados para Machine Learning
+
+### Variaveis preditoras e variavel-alvo
+
+Foram selecionadas as 30 caracteristicas morfologicas
+como variaveis preditoras (X).
+
+A coluna de diagnostico foi codificada em:
+
+- 0: Benigno
+- 1: Maligno
+
+O identificador da amostra foi excluido das
+variaveis de treinamento.
+
+### Divisao dos dados
+
+Foi utilizada uma separacao estratificada,
+com semente aleatoria 42.
+
+- Treinamento: 398 amostras
+- Validacao: 85 amostras
+- Teste: 86 amostras
+
+As proporcoes das classes foram preservadas
+aproximadamente nos tres conjuntos.
+
+Nao foram identificados indices compartilhados
+entre treinamento, validacao e teste.
+
+### Padronizacao
+
+Foi utilizado o StandardScaler para padronizar
+as caracteristicas numericas.
+
+Os parametros foram calculados exclusivamente
+com os dados de treinamento.
+
+O conjunto de validacao recebeu a mesma
+transformacao, evitando o ajuste com dados
+externos ao treinamento.
+
+### Pipelines
+
+Foram configurados dois pipelines:
+
+1. Regressao Logistica
+   - StandardScaler
+   - LogisticRegression
+
+2. Random Forest
+   - RandomForestClassifier
+   - 200 arvores inicialmente configuradas
+
+Os classificadores foram validados quanto
+a estrutura e permanecem sem treinamento.
+
+### Notebook
+
+notebooks/02_preparacao_modelagem.ipynb
+
+### Proxima etapa
+
+Treinamento e avaliacao dos classificadores,
+utilizando os conjuntos previamente separados.
+
+O conjunto de teste sera reservado para
+a avaliacao final do modelo selecionado.
