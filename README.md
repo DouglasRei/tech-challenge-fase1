@@ -1,222 +1,266 @@
+# Tech Challenge FIAP — Fase 1
+## Classificação de amostras do Breast Cancer Wisconsin com Inteligência Artificial Explicável
 
-# Tech Challenge - Fase 1
+> **Projeto acadêmico e experimental.** Esta aplicação não é um dispositivo médico, não realiza diagnóstico clínico e não deve orientar decisões de saúde. A classificação é uma saída computacional baseada em um conjunto público de dados.
 
-## Sistema Inteligente de Apoio à Classificação de Tumores Mamários
+## 1. Visão geral
 
-Projeto desenvolvido para a pós-graduação em
-Desenvolvimento com Inteligência Artificial da FIAP.
+Este repositório apresenta uma solução em Python de aprendizado de máquina supervisionado para classificar, de forma experimental, características morfológicas de amostras do dataset **Breast Cancer Wisconsin (Diagnostic)** nas classes **benigna (0)** e **maligna (1)**.
 
-## Objetivo
+O trabalho foi desenvolvido para o **Tech Challenge — FIAP, Fase 1**, com foco em exploração de dados, pré-processamento, comparação de classificadores, avaliação de desempenho e interpretabilidade. Uma interface em **Streamlit** permite selecionar exemplos do dataset, modificar 30 características, executar uma simulação, visualizar explicações **SHAP** e baixar um relatório da simulação em PDF.
 
-Desenvolver e comparar modelos supervisionados
-de Machine Learning para classificar amostras
-de massas mamárias como benignas ou malignas.
+### Funcionalidades implementadas
 
-## Dataset
+- Análise exploratória: estatísticas descritivas, distribuição de classes, boxplots, histogramas e correlações.
+- Separação estratificada em treinamento, validação e teste.
+- Comparação entre **Regressão Logística** e **Random Forest**, com estudo exploratório de limiares e combinação de previsões.
+- Validação cruzada estratificada com cinco folds no conjunto de desenvolvimento.
+- Modelo definitivo: `StandardScaler` + `LogisticRegression` em um pipeline do scikit-learn.
+- Simulador interativo com conferência da estrutura e da ordem das 30 variáveis.
+- Interpretação global e local via SHAP, incluindo gráfico *waterfall*.
+- Geração de relatório PDF referente à simulação executada.
+- Verificação de dados inválidos e aviso para amostras fora da faixa do dataset de referência.
 
-Breast Cancer Wisconsin (Diagnostic)
+## 2. Problema e objetivo
 
-Fonte:
-https://archive.ics.uci.edu/dataset/17
+O desafio propõe uma base de sistema de apoio à análise de dados médicos estruturados. Nesta implementação, o objetivo técnico é avaliar se classificadores supervisionados conseguem distinguir as duas categorias do dataset e apresentar, de modo transparente, quais variáveis contribuíram para suas previsões.
 
-## Tecnologias
+**Não se pretende demonstrar uso clínico.** A análise é limitada aos dados públicos, aos procedimentos experimentais adotados e às métricas obtidas.
 
-- Python 3.13
-- Pandas e NumPy
-- Scikit-learn
-- Matplotlib e Seaborn
-- SHAP
-- Jupyter Notebook
-- Streamlit
+## 3. Base de dados
 
-## Preparação do ambiente
+Foi utilizado o **Breast Cancer Wisconsin (Diagnostic)**, conjunto tabular público conhecido como WDBC.
 
-Criar um ambiente virtual Python 3.13
-e instalar as dependências:
+| Característica | Quantidade |
+| --- | ---: |
+| Registros | 569 |
+| Variáveis preditoras | 30 |
+| Colunas no arquivo bruto | 32: `id`, `diagnosis` e 30 medidas |
+| Amostras benignas (B) | 357 |
+| Amostras malignas (M) | 212 |
 
-python -m pip install -r requirements-lock.txt
+As 30 medidas são organizadas em três grupos (`mean`, `se` e `worst`) para dez características morfológicas: `radius`, `texture`, `perimeter`, `area`, `smoothness`, `compactness`, `concavity`, `concave_points`, `symmetry` e `fractal_dimension`.
 
-## Organização
+**Fonte indicada pelo enunciado:** [Breast Cancer Wisconsin Data — Kaggle](https://www.kaggle.com/datasets/uciml/breast-cancer-wisconsin-data/data).
 
-- data: dados originais e processados
-- notebooks: experimentos e análises
-- src: algoritmos e processamento
-- models: modelos treinados
-- app: interface demonstrativa
-- reports: gráficos e documentação
-- tests: testes automatizados
+A aplicação utiliza o arquivo local:
 
-## Status
+```text
+data/raw/wdbc.data
+```
 
-Etapa 2 - Preparação do ambiente de desenvolvimento.
+O identificador `id` não é usado como preditor. `diagnosis` é a variável-alvo, codificada como `B → 0` e `M → 1`. O arquivo bruto precisa estar disponível no caminho acima para o simulador carregar os exemplos.
 
-## Observação
+## 4. Metodologia
 
-Este projeto tem finalidade acadêmica e não
-substitui avaliações ou diagnósticos médicos.
+### 4.1 Exploração e preparação
 
+Foram examinados formato da base, distribuição das classes, valores ausentes, duplicatas, consistência numérica e correlação entre as características. Os resultados e gráficos são registrados nos notebooks e na pasta `reports/figures/`.
 
+A estratégia de desenvolvimento utiliza separação estratificada para preservar aproximadamente a proporção de classes:
 
-## Etapa 3 - Analise Exploratoria dos Dados
+| Conjunto | Amostras | Finalidade |
+| --- | ---: | --- |
+| Treinamento | 398 | Ajuste dos classificadores |
+| Validação | 85 | Comparações e decisões metodológicas |
+| Teste independente da seleção | 86 | Avaliação final após escolha do modelo |
+| **Total** | **569** | |
 
-A analise exploratoria foi realizada utilizando
-o dataset Breast Cancer Wisconsin Diagnostic,
-disponibilizado pela UCI Machine Learning Repository.
+### 4.2 Classificadores considerados
 
-### Caracterizacao do dataset
+**Regressão Logística.** Utiliza `StandardScaler` seguido de `LogisticRegression(max_iter=2000, random_state=42)`. A padronização fica dentro do pipeline para que as estatísticas necessárias sejam aprendidas durante o ajuste, evitando aplicar antecipadamente informação dos dados de avaliação.
 
-- Total de amostras: 569
-- Caracteristicas preditoras: 30
-- Amostras benignas: 357 (62,74%)
-- Amostras malignas: 212 (37,26%)
+**Random Forest.** Utiliza `RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)` sem necessidade de padronização para o algoritmo de árvores.
 
-### Qualidade dos dados
+Também foram explorados diferentes limiares e a combinação das decisões dos dois modelos (operador lógico OU). A decisão registrada no projeto selecionou a **Regressão Logística com limiar de 0,50** como modelo definitivo.
 
-Foram realizadas verificacoes de:
+### 4.3 Validação cruzada
 
-- Tipos de dados
-- Valores ausentes
-- Registros duplicados
-- Identificadores repetidos
-- Valores nao finitos
-- Valores negativos
-- Valores iguais a zero
+Foi aplicada validação cruzada estratificada com **cinco folds** sobre o conjunto de desenvolvimento de 398 amostras. Os resultados agregados fora do fold (*out-of-fold*) foram:
 
-Nao foram identificados valores ausentes,
-nao finitos, negativos ou registros duplicados
-segundo os criterios investigados.
+| Estratégia | Acurácia | Precisão — classe maligna | Recall — classe maligna | F1 — classe maligna |
+| --- | ---: | ---: | ---: | ---: |
+| Regressão Logística (50%) | 98,24% | 100,00% | 95,27% | 97,58% |
+| Random Forest (50%) | 94,72% | 93,79% | 91,89% | 92,83% |
+| Combinação OU (50%) | 96,48% | 94,08% | 96,62% | 95,33% |
 
-Foram encontradas 78 ocorrencias de valores zero
-em caracteristicas relacionadas a concavidade
-e pontos concavos. Esses valores foram preservados.
+Esses números são **resultados de desenvolvimento**. Não devem ser confundidos com as métricas finais do conjunto de teste.
 
-### Analise estatistica
+## 5. Avaliação final do modelo selecionado
 
-Foram calculadas estatisticas descritivas
-das 30 caracteristicas numericas.
+Depois da seleção metodológica, o pipeline definitivo foi ajustado utilizando **483 amostras** (treinamento + validação). A avaliação final foi realizada nas **86 amostras reservadas para teste**.
 
-Tambem foram realizadas comparacoes entre
-as amostras benignas e malignas.
+| Métrica | Resultado observado no teste |
+| --- | ---: |
+| Acurácia | 100,00% |
+| Precisão — classe maligna | 100,00% |
+| Recall / sensibilidade — classe maligna | 100,00% |
+| F1-score — classe maligna | 100,00% |
+| Especificidade | 100,00% |
 
-As analises revelaram diferencas nas distribuicoes
-de raio, area, concavidade e pontos concavos.
+Matriz de confusão (linhas = classe real; colunas = classe prevista; `0 = benigno`, `1 = maligno`):
 
-### Analise de correlacao
+```text
+                 Previsto 0   Previsto 1
+Real 0 (benigno)       54            0
+Real 1 (maligno)        0           32
+```
 
-Foram investigados 435 pares unicos de
-caracteristicas utilizando Pearson.
+**Interpretação cautelosa:** não houve erro nas 86 amostras desse teste. Isso não comprova acurácia de 100% em outros hospitais, pacientes, instrumentos, populações ou versões dos dados. O conjunto é pequeno, não houve validação clínica prospectiva nem avaliação externa de implantação. O modelo permanece estritamente experimental.
 
-Principais resultados:
+Registros do experimento:
 
-- radius_mean x perimeter_mean: 0,998
-- radius_worst x perimeter_worst: 0,994
-- radius_mean x area_mean: 0,987
+- `reports/decisao_modelo.json`: seleção do classificador e limiar.
+- `reports/metricas_finais_teste.json`: métricas e matriz de confusão finais.
+- `reports/figures/10_matriz_confusao_final_teste.png`: matriz de confusão do teste.
 
-As correlacoes elevadas sugerem informacoes
-parcialmente redundantes entre alguns atributos.
+## 6. Interpretabilidade com SHAP
 
-Nenhuma caracteristica foi removida apenas
-com base na correlacao.
+A interface e os notebooks incluem explicações SHAP para compreender **como o modelo utiliza as variáveis**, sem atribuir causalidade biológica.
 
-### Graficos produzidos
+- **Explicação global:** magnitude média das contribuições e gráfico *beeswarm*.
+- **Explicação local:** gráfico *waterfall* e tabela com as dez contribuições de maior impacto para a amostra simulada.
+- **Escala:** as contribuições do classificador são apresentadas em **log-odds**, não em pontos percentuais.
+- **Leitura:** valores SHAP positivos aumentam a pontuação do modelo na direção da classe maligna; valores negativos a reduzem.
+- **Limite:** explicabilidade não substitui avaliação de validade clínica e não demonstra que uma característica provoque uma doença.
 
-Os seis graficos estao armazenados em
-reports/figures:
+Exemplos de figuras:
 
-1. Distribuicao dos diagnosticos
-2. Boxplot do raio medio
-3. Histograma do raio medio
-4. Boxplots das caracteristicas
-5. Correlacao entre quatro caracteristicas
-6. Heatmap das 30 caracteristicas
+![Importância global das características via SHAP](reports/figures/12_importancia_global_shap.png)
 
-### Notebook
+![Distribuição das contribuições SHAP](reports/figures/13_shap_beeswarm.png)
 
-Arquivo:
-notebooks/01_exploracao_dados.ipynb
+Outros exemplos: `reports/figures/14_shap_waterfall_maligno.png` e `reports/figures/15_shap_waterfall_benigno.png`.
 
-### Reproducao
+## 7. Estrutura do repositório
 
-Apos configurar o ambiente virtual e instalar
-as dependencias, abra o notebook no VS Code,
-selecione o kernel Python do projeto e execute
-todas as celulas em sequencia.
+```text
+tech-challenge-fase1/
+├── app/
+│   ├── app.py                        # Interface Streamlit
+│   ├── relatorio_pdf.py              # Relatório da simulação em PDF
+│   └── validacao_entrada.py          # Regras de validação de entrada
+├── data/
+│   └── raw/
+│       └── wdbc.data                 # Dataset público necessário à demonstração
+├── models/
+│   └── modelo_final_logistica.joblib # Pipeline treinado do projeto
+├── notebooks/
+│   ├── 00_verificacao_ambiente.ipynb
+│   ├── 01_exploracao_dados.ipynb
+│   ├── 02_preparacao_modelagem.ipynb
+│   └── 03_treinamento_modelos.ipynb
+├── reports/
+│   ├── figures/                      # Gráficos gerados nas análises
+│   ├── decisao_modelo.json
+│   └── metricas_finais_teste.json
+├── src/                               # Código de apoio, se aplicável
+├── tests/
+│   └── test_validacao_entrada.py
+├── .gitignore
+├── requirements.txt
+├── requirements-lock.txt
+└── README.md
+```
 
-### Resultado
+> A árvore acima descreve os caminhos utilizados e observados ao longo do desenvolvimento. Antes da entrega, confirme com `git ls-files` que todos os arquivos necessários estão efetivamente versionados. Diretórios locais como `.venv/` e `__pycache__/` não devem integrar o repositório.
 
-A analise exploratoria foi validada utilizando
-verificacoes automaticas de integridade
-e existencia dos graficos.
+## 8. Como executar localmente
 
-Os resultados representam uma investigacao
-academica, nao uma validacao clinica.
+O desenvolvimento e os testes apresentados foram realizados com **Python 3.13** em ambiente virtual. Recomenda-se usar uma versão de Python compatível com as dependências efetivamente travadas no projeto.
 
+### 8.1 Preparar o ambiente (Windows / PowerShell)
 
-## Etapa 4 - Preparacao dos Dados para Machine Learning
+Abra o terminal na raiz do projeto:
 
-### Variaveis preditoras e variavel-alvo
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
-Foram selecionadas as 30 caracteristicas morfologicas
-como variaveis preditoras (X).
+Para uma reprodução mais estrita das versões registradas, verifique o conteúdo e a compatibilidade de `requirements-lock.txt` e, se apropriado, use esse arquivo no lugar de `requirements.txt`.
 
-A coluna de diagnostico foi codificada em:
+### 8.2 Conferir os artefatos
 
-- 0: Benigno
-- 1: Maligno
+Antes de iniciar, confirme a presença de:
 
-O identificador da amostra foi excluido das
-variaveis de treinamento.
+```text
+data/raw/wdbc.data
+models/modelo_final_logistica.joblib
+reports/decisao_modelo.json
+reports/metricas_finais_teste.json
+```
 
-### Divisao dos dados
+O modelo serializado em `.joblib` deve ser carregado apenas se sua procedência for confiável.
 
-Foi utilizada uma separacao estratificada,
-com semente aleatoria 42.
+### 8.3 Iniciar a interface
 
-- Treinamento: 398 amostras
-- Validacao: 85 amostras
-- Teste: 86 amostras
+```powershell
+python -m streamlit run app/app.py
+```
 
-As proporcoes das classes foram preservadas
-aproximadamente nos tres conjuntos.
+O terminal exibirá um endereço local, normalmente `http://localhost:8501`.
 
-Nao foram identificados indices compartilhados
-entre treinamento, validacao e teste.
+### 8.4 Executar testes
 
-### Padronizacao
+```powershell
+python -m unittest discover -s tests -v
+```
 
-Foi utilizado o StandardScaler para padronizar
-as caracteristicas numericas.
+O conjunto de testes de validação de entrada cobre condições como colunas ausentes, ordem incorreta, valores negativos, `NaN`, infinitos, texto, booleanos e limites inválidos. A validação funcional integrada do Streamlit deve ser executada adicionalmente.
 
-Os parametros foram calculados exclusivamente
-com os dados de treinamento.
+### 8.5 Uso do simulador
 
-O conjunto de validacao recebeu a mesma
-transformacao, evitando o ajuste com dados
-externos ao treinamento.
+1. Acesse a aba **Simulador de IA**.
+2. Selecione um exemplo benigno ou maligno do conjunto público.
+3. Examine e, se desejar, altere as 30 características apresentadas.
+4. Clique em **Executar previsão**.
+5. Observe a classificação, a pontuação probabilística do modelo e a explicação SHAP.
+6. Baixe o **relatório da simulação em PDF** pelo botão disponível após a previsão.
 
-### Pipelines
+A probabilidade exibida é uma saída do classificador e **não** uma probabilidade clínica validada de doença. Os exemplos exibidos pelo simulador podem ter sido usados no desenvolvimento do modelo e não constituem novos testes independentes.
 
-Foram configurados dois pipelines:
+## 9. Validação das entradas e cuidados de segurança
 
-1. Regressao Logistica
-   - StandardScaler
-   - LogisticRegression
+A camada de validação inspeciona formato, quantidade e ordem das características, finitude dos números e limites operacionais. Também sinaliza valores que ultrapassem a faixa observada no dataset público de referência.
 
-2. Random Forest
-   - RandomForestClassifier
-   - 200 arvores inicialmente configuradas
+- Valores fora da faixa do dataset são um sinal de **extrapolação**, não de anormalidade médica.
+- Os arquivos locais de configuração e o pipeline devem provir de fonte confiável.
+- O relatório PDF deve refletir a amostra e o limiar usados na previsão corrente.
+- A aplicação é uma demonstração local; autenticação, controle de acesso e proteção de dados reais exigiriam projeto e auditoria específicos.
+- Não inserir prontuários ou dados pessoais reais na demonstração.
 
-Os classificadores foram validados quanto
-a estrutura e permanecem sem treinamento.
+## 10. Limitações e uso responsável
 
-### Notebook
+Este experimento usa um dataset tabular público, histórico e de dimensão restrita. Não inclui dados prospectivos, validação multicêntrica, análise sistemática de subgrupos, calibração para risco clínico ou estudo de impacto em fluxo assistencial. O alto desempenho no conjunto de teste não deve ser extrapolado para contextos clínicos.
 
-notebooks/02_preparacao_modelagem.ipynb
+O sistema tem finalidade **exclusivamente acadêmica**. Qualquer eventual pesquisa com utilização em saúde exigiria validação externa, governança de dados, análise de riscos, procedimentos regulatórios pertinentes e supervisão de profissionais habilitados.
 
-### Proxima etapa
+## 11. Evidências e material para a banca
 
-Treinamento e avaliacao dos classificadores,
-utilizando os conjuntos previamente separados.
+O enunciado da FIAP prevê, além do código e dos notebooks:
 
-O conjunto de teste sera reservado para
-a avaliacao final do modelo selecionado.
+- **README.md** com instruções de execução (este documento).
+- **Dockerfile** funcional e testado — *item ainda a preparar/validar na etapa de entrega*.
+- **Dataset ou link de download**, com instruções para reproduzir o ambiente.
+- **Relatório técnico em PDF** com link do repositório, pré-processamento, modelos, métricas, gráficos, resultados e análise crítica — *documento distinto dos PDFs individuais gerados pelo simulador*.
+- **Vídeo de demonstração**, hospedado no YouTube ou Vimeo (público ou não listado), de **até 15 minutos**.
+
+**Repositório Git:** `[INSERIR_URL_DO_REPOSITORIO]`  
+**Vídeo demonstrativo:** `[INSERIR_URL_DO_VIDEO_APOS_PUBLICACAO]`
+
+Antes de publicar, revisar `.gitignore`, segredos, arquivos gerados, dependências, licença/atribuição do dataset e instruções de execução.
+
+## 12. Referências
+
+- FIAP. *Tech Challenge — Fase 1*. Enunciado fornecido para o projeto.
+- [Breast Cancer Wisconsin Data (Kaggle)](https://www.kaggle.com/datasets/uciml/breast-cancer-wisconsin-data/data).
+- [scikit-learn — documentação](https://scikit-learn.org/stable/).
+- [SHAP — documentação](https://shap.readthedocs.io/en/latest/).
+- [Streamlit — documentação](https://docs.streamlit.io/).
+
+---
+
+**Status:** aplicação acadêmica funcional, com simulação, explicabilidade e geração de PDF testadas localmente. A entrega oficial depende da revisão final do repositório, do Dockerfile, do relatório técnico e do vídeo.
